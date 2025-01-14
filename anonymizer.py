@@ -1,17 +1,36 @@
 import os
+import hashlib
 import pydicom
-from pydicom.uid import generate_uid
 from explorer import get_dicom_files
 
 
-def anonymize_dicom_files(input_dir, output_dir):
+def generate_uid_from_patient_id(patient_id, base_uid="1.2.826.0.1.3680043.9.7433"):
     """
-    Anonymizes all DICOM files from the input directory (including nested folders)
-    and saves them to the output directory with the same structure.
+    Generate a reproducible DICOM UID based on a PatientID.
+
+    Parameters:
+        patient_id (str): PatientID to hash for UID generation.
+        base_uid (str): Base UID to prepend for uniqueness. Default is a public root.
+
+    Returns:
+        str: A reproducible DICOM UID.
+    """
+    # Ensure PatientID is a string
+    patient_id = str(patient_id)
+    hash_object = hashlib.md5(patient_id.encode())  # Hash the PatientID
+    hash_suffix = hash_object.hexdigest()[:24]  # Limit to 24 characters
+    return f"{base_uid}.{hash_suffix}"
+
+
+def anonymize_dicom_files(input_dir, output_dir, base_uid="1.2.826.0.1.3680043.9.7433"):
+    """
+    Anonymizes all DICOM files in the input directory and generates reproducible UIDs
+    based on PatientID.
 
     Parameters:
         input_dir (str): Directory containing the original DICOM files.
         output_dir (str): Directory to save anonymized DICOM files.
+        base_uid (str): Base UID for reproducible UID generation.
     """
     # Retrieve all DICOM files from the input directory
     dicom_files = get_dicom_files(input_dir)
@@ -22,10 +41,15 @@ def anonymize_dicom_files(input_dir, output_dir):
             # Read the DICOM file
             dicom = pydicom.dcmread(file_path)
 
+            # Extract PatientID (default to empty string if not present)
+            patient_id = getattr(dicom, "PatientID", "default")
+
             # Anonymize fields containing PHI
             anonymized_fields = {
                 "PatientName": "Anonymous",
-                "PatientID": generate_uid(),  # Use a unique ID
+                "PatientID": generate_uid_from_patient_id(
+                    patient_id, base_uid
+                ),  # Reproducible UID
                 "PatientBirthDate": "",
                 "PatientAddress": "",
                 "InstitutionName": "Anonymized Institution",
@@ -44,6 +68,17 @@ def anonymize_dicom_files(input_dir, output_dir):
                 if hasattr(dicom, field):
                     setattr(dicom, field, value)
 
+            # Replace UIDs with reproducible UIDs based on PatientID
+            dicom.StudyInstanceUID = generate_uid_from_patient_id(
+                patient_id + "Study", base_uid
+            )
+            dicom.SeriesInstanceUID = generate_uid_from_patient_id(
+                patient_id + "Series", base_uid
+            )
+            dicom.SOPInstanceUID = generate_uid_from_patient_id(
+                patient_id + "SOP", base_uid
+            )
+
             # Remove private tags
             dicom.remove_private_tags()
 
@@ -54,7 +89,6 @@ def anonymize_dicom_files(input_dir, output_dir):
 
             # Save the anonymized DICOM file
             dicom.save_as(output_path)
-
             print(f"Anonymized and saved: {output_path}")
 
         except Exception as e:
