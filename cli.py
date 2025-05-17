@@ -1,19 +1,24 @@
+"""Command line interface for running the DICOM anonymizer."""
+
 import os
 import sys
 from anonymizer import anonymize_dicom_files
 
 
 def main():
-    """
-    CLI tool for anonymizing DICOM files.
+    """Run the anonymizer from the command line.
 
-    Usage:
+    This function parses command line arguments, validates them and then
+    invokes :func:`anonymize_dicom_files` on the provided paths.
+
+    Usage::
+
         python cli.py <input_folder> [output_folder]
 
     Arguments:
-        input_folder   Path to the folder containing DICOM files.
-        output_folder  (Optional) Path to the folder to save anonymized files.
-                       Defaults to '<input_folder>-anonymized'.
+        input_folder: Path to the folder containing DICOM files.
+        output_folder: Optional path to save anonymized files. If omitted, a
+            new folder named ``<input_folder>-anonymized`` will be created.
     """
     # Validate arguments
     if len(sys.argv) < 2:
