@@ -1,15 +1,23 @@
+"""Helper utilities for discovering DICOM files on disk."""
+
 import os
 
 
 def get_dicom_files(input_dir):
-    """
-    Recursively retrieves all DICOM file paths from the input directory.
+    """Collect paths to DICOM files under ``input_dir``.
 
-    Parameters:
-        input_dir (str): Directory to search for DICOM files.
+    The search is recursive and any file ending with ``.dcm`` or ``.DCM`` is
+    considered a DICOM file.
 
-    Returns:
-        list: List of file paths to DICOM files.
+    Parameters
+    ----------
+    input_dir : str
+        Directory to search for DICOM files.
+
+    Returns
+    -------
+    list of str
+        List of file paths to discovered DICOM files.
     """
     dicom_files = []
     for root, _, files in os.walk(input_dir):
