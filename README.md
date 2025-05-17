@@ -1,12 +1,15 @@
 Usage
+-----
 
-Default Output Folder (Parent Folder)
+Run the anonymizer on a directory of DICOM files:
 
 ```
 python cli.py /path/to/input/folder
 ```
 
-Custom Output Folder
+By default the anonymized files are written to `<input_folder>-anonymized`.
+
+To use a specific output directory provide it as the second argument:
 
 ```
 python cli.py /path/to/input/folder /path/to/output/folder
