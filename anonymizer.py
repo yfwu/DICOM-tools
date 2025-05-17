@@ -18,7 +18,9 @@ def generate_uid_from_patient_id(patient_id, base_uid="1.2.826.0.1.3680043.9.743
     # Ensure PatientID is a string
     patient_id = str(patient_id)
     hash_object = hashlib.md5(patient_id.encode())  # Hash the PatientID
-    hash_suffix = hash_object.hexdigest()[:24]  # Limit to 24 characters
+    # Use decimal representation to ensure UID contains only digits
+    hash_int = int.from_bytes(hash_object.digest(), "big")
+    hash_suffix = str(hash_int)[:24]  # Limit to 24 digits
     return f"{base_uid}.{hash_suffix}"
 
 
